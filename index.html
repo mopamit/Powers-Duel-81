@@ -129,9 +129,27 @@ button{font:inherit}.app{min-height:100vh;padding:22px 32px 28px;display:flex;fl
    q(0,8,-1,14,'אתגר'), q(-3,4,3,4,'אתגר'), q(-2,6,-4,3,'אתגר'), q(-5,2,-2,5,'אתגר'),
    q(1,100,0,100,'אתגר'), q(-1,2026,-1,2027,'אתגר')
  ];
+
+ // מחזור רמות: 2 קלות, 2 בינוניות, קשה אחת, אתגר אחד — וחוזר חלילה
+ const difficultyCycle=['קל','קל','בינוני','בינוני','קשה','אתגר'];
+ // חלק מהתרגילים המתקדמים מסווגים כעת כ"קשה" כדי ליצור מדרגה לפני האתגר
+ const hardKeys=new Set([
+   '10|3|2|10','7|2|3|4','16|2|2|8','27|2|3|6',
+   '-2|4|2|4','3|6|9|3','4|5|2|10','5|4|25|2'
+ ]);
+ pool.forEach(item=>{ if(hardKeys.has(item.key)) item.diff='קשה'; });
+
  function pick(){
    turns++;
-   let avail=pool.filter(x=>!used.has(x.key));
+   const wanted=difficultyCycle[(turns-1)%difficultyCycle.length];
+   let avail=pool.filter(x=>x.diff===wanted && !used.has(x.key));
+   // אם מוצו כל השאלות ברמה מסוימת, מאפשרים מחזור חדש רק של אותה רמה
+   if(!avail.length){
+     pool.filter(x=>x.diff===wanted).forEach(x=>used.delete(x.key));
+     avail=pool.filter(x=>x.diff===wanted && !used.has(x.key));
+   }
+   // הגנה למקרה שאין כלל שאלה ברמה המבוקשת
+   if(!avail.length) avail=pool.filter(x=>!used.has(x.key));
    if(!avail.length){used.clear();avail=pool.slice()}
    current=avail[Math.floor(Math.random()*avail.length)]; used.add(current.key);
    L.innerHTML=powText(current.a,current.e1); R.innerHTML=powText(current.b,current.e2); level.textContent='רמת '+current.diff;
